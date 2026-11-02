@@ -1,0 +1,6 @@
+{
+  "name": "Musikku",
+  "description": "Pemutar musik offline modern berestetika liquid glass dengan equalizer 5-band, lirik, playlist, dan manajemen album.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

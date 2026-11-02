@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Musikku</string>
+    <string name="tab_home">Beranda</string>
+    <string name="tab_library">Pustaka</string>
+    <string name="tab_playlists">Playlist</string>
+    <string name="tab_equalizer">Equalizer</string>
+    <string name="tab_settings">Pengaturan</string>
+    <string name="action_play">Putar</string>
+    <string name="action_pause">Jeda</string>
+    <string name="action_next">Berikutnya</string>
+    <string name="action_previous">Sebelumnya</string>
+    <string name="action_shuffle">Acak</string>
+    <string name="action_repeat">Ulangi</string>
+    <string name="action_search">Cari lagu, album, artis</string>
+    <string name="label_favorites">Disukai</string>
+    <string name="label_all_songs">Semua Lagu</string>
+    <string name="label_albums">Album</string>
+    <string name="label_artists">Artis</string>
+    <string name="label_recently_played">Terbaru</string>
+    <string name="label_most_played">Sering Diputar</string>
+</resources>
