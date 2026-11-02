@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,6 +26,9 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -48,7 +49,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Album
 import com.example.data.model.Song
+import com.example.data.model.SongSortOption
 import com.example.ui.components.SongArtwork
+import com.example.ui.components.bouncyClickable
 import com.example.ui.components.liquidGlass
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkSurfaceElevated
@@ -82,13 +85,24 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedFilter by remember { mutableStateOf(HomeFilter.ALL) }
+    var currentSortOption by remember { mutableStateOf(SongSortOption.RECENTLY_ADDED) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
-    val filteredSongs = remember(selectedFilter, songs) {
-        when (selectedFilter) {
+    val filteredSongs = remember(selectedFilter, currentSortOption, songs) {
+        val base = when (selectedFilter) {
             HomeFilter.ALL -> songs
             HomeFilter.RECENT -> songs.sortedByDescending { it.dateAdded }
             HomeFilter.FAVORITES -> songs.filter { it.isFavorite }
             HomeFilter.MOST_PLAYED -> songs.sortedByDescending { it.playCount }
+        }
+
+        when (currentSortOption) {
+            SongSortOption.RECENTLY_ADDED -> base.sortedByDescending { it.dateAdded }
+            SongSortOption.TITLE_ASC -> base.sortedBy { it.title.lowercase() }
+            SongSortOption.TITLE_DESC -> base.sortedByDescending { it.title.lowercase() }
+            SongSortOption.ARTIST -> base.sortedBy { it.artist.lowercase() }
+            SongSortOption.DURATION_DESC -> base.sortedByDescending { it.durationMs }
+            SongSortOption.DURATION_ASC -> base.sortedBy { it.durationMs }
         }
     }
 
@@ -98,7 +112,7 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(DarkBackground),
-        contentPadding = PaddingValues(bottom = 140.dp)
+        contentPadding = PaddingValues(bottom = 150.dp)
     ) {
         // Top Header
         item {
@@ -113,7 +127,7 @@ fun HomeScreen(
                     // Avatar circle with glow
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
                             .background(
                                 Brush.radialGradient(
@@ -147,14 +161,14 @@ fun HomeScreen(
                     }
                 }
 
-                Row {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     // Search button
                     Box(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(CircleShape)
-                            .background(Color(0x26FFFFFF))
-                            .clickable { onSearchClick() }
+                            .background(Color(0x22FFFFFF))
+                            .bouncyClickable { onSearchClick() }
                             .testTag("home_search_button"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -166,15 +180,13 @@ fun HomeScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(10.dp))
-
                     // Heart shortcut button
                     Box(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(CircleShape)
-                            .background(Color(0x26FFFFFF))
-                            .clickable { onFavoritesClick() }
+                            .background(Color(0x22FFFFFF))
+                            .bouncyClickable { onFavoritesClick() }
                             .testTag("home_favorites_button"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -195,7 +207,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                    .padding(horizontal = 24.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 HomeFilter.values().forEach { filter ->
@@ -203,8 +215,8 @@ fun HomeScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
-                            .background(if (isSelected) NeonLime else Color(0x26FFFFFF))
-                            .clickable { selectedFilter = filter }
+                            .background(if (isSelected) NeonLime else Color(0x22FFFFFF))
+                            .bouncyClickable { selectedFilter = filter }
                             .padding(horizontal = 18.dp, vertical = 8.dp)
                             .testTag("filter_chip_${filter.name.lowercase()}"),
                         contentAlignment = Alignment.Center
@@ -220,7 +232,7 @@ fun HomeScreen(
             }
         }
 
-        // Featured Album Section (Curated card from reference design)
+        // Featured Album Section (Curated card)
         if (featuredAlbum != null) {
             item {
                 Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp)) {
@@ -232,17 +244,17 @@ fun HomeScreen(
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
-                    // Big featured card styled exactly like the Discover Weekly reference card
+                    // Big featured card with smooth bouncy interaction
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(28.dp))
+                            .clip(RoundedCornerShape(30.dp))
                             .background(
                                 Brush.linearGradient(
                                     listOf(Color(0xFFC7B1FF), Color(0xFFA58BFA))
                                 )
                             )
-                            .clickable { onAlbumSelected(featuredAlbum) }
+                            .bouncyClickable(pressedScale = 0.96f) { onAlbumSelected(featuredAlbum) }
                             .padding(20.dp)
                             .testTag("featured_album_card")
                     ) {
@@ -271,13 +283,13 @@ fun HomeScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    // Circular play button
+                                    // Circular play button with bounce
                                     Box(
                                         modifier = Modifier
-                                            .size(44.dp)
+                                            .size(46.dp)
                                             .clip(CircleShape)
                                             .background(Color(0xFF281347))
-                                            .clickable {
+                                            .bouncyClickable {
                                                 if (featuredAlbum.songs.isNotEmpty()) {
                                                     onSongSelected(featuredAlbum.songs[0], featuredAlbum.songs)
                                                 }
@@ -295,7 +307,7 @@ fun HomeScreen(
 
                                     Box(
                                         modifier = Modifier
-                                            .size(36.dp)
+                                            .size(38.dp)
                                             .clip(CircleShape)
                                             .background(Color.White.copy(alpha = 0.25f)),
                                         contentAlignment = Alignment.Center
@@ -316,7 +328,7 @@ fun HomeScreen(
                                 coverUri = featuredAlbum.coverUri,
                                 title = featuredAlbum.name,
                                 size = 96.dp,
-                                shape = RoundedCornerShape(20.dp)
+                                shape = RoundedCornerShape(24.dp)
                             )
                         }
                     }
@@ -324,12 +336,12 @@ fun HomeScreen(
             }
         }
 
-        // Song Collection Section ("Top daily playlists" / "Koleksi Lagu")
+        // Song Collection Section with Sort Button
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                    .padding(horizontal = 24.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -339,11 +351,57 @@ fun HomeScreen(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = "${filteredSongs.size} lagu",
-                    color = TextSecondary,
-                    fontSize = 13.sp
-                )
+
+                // Sort Dropdown Button
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0x22FFFFFF))
+                            .bouncyClickable { showSortMenu = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .testTag("sort_menu_button"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Sort,
+                                contentDescription = "Urutkan",
+                                tint = NeonLime,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = currentSortOption.label,
+                                color = TextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false },
+                        modifier = Modifier.background(DarkSurfaceElevated)
+                    ) {
+                        SongSortOption.values().forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = option.label,
+                                        color = if (option == currentSortOption) NeonLime else TextPrimary,
+                                        fontWeight = if (option == currentSortOption) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    currentSortOption = option
+                                    showSortMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -368,16 +426,20 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSongSelected(song, filteredSongs) }
-                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(if (isCurrentPlaying) Color(0x26D4FF28) else Color.Transparent)
+                        .bouncyClickable { onSongSelected(song, filteredSongs) }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                         .testTag("song_item_${song.id}"),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SongArtwork(
                         coverUri = song.customCoverUri,
                         title = song.title,
+                        artist = song.artist,
                         size = 52.dp,
-                        shape = RoundedCornerShape(14.dp)
+                        shape = RoundedCornerShape(16.dp)
                     )
 
                     Spacer(modifier = Modifier.width(14.dp))
@@ -391,6 +453,7 @@ fun HomeScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "${song.artist} • ${song.durationFormatted}",
                             color = TextSecondary,
@@ -400,23 +463,31 @@ fun HomeScreen(
                         )
                     }
 
-                    // Favorite toggle
-                    IconButton(
-                        onClick = { onToggleFavorite(song) },
-                        modifier = Modifier.size(36.dp).testTag("fav_icon_${song.id}")
+                    // Bouncy Favorite toggle
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .bouncyClickable { onToggleFavorite(song) }
+                            .testTag("fav_icon_${song.id}"),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (song.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Sukai",
                             tint = if (song.isFavorite) HeartRed else TextSecondary.copy(alpha = 0.5f),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
-                    // More options button
-                    IconButton(
-                        onClick = { onSongOptionClick(song) },
-                        modifier = Modifier.size(36.dp).testTag("more_icon_${song.id}")
+                    // Bouncy More options button
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .bouncyClickable { onSongOptionClick(song) }
+                            .testTag("more_icon_${song.id}"),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,

@@ -2,7 +2,6 @@ package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -57,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Playlist
 import com.example.data.model.Song
 import com.example.ui.components.SongArtwork
+import com.example.ui.components.bouncyClickable
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkSurfaceElevated
 import com.example.ui.theme.HeartRed
@@ -84,7 +83,6 @@ fun PlaylistsScreen(
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf<Playlist?>(null) }
-    var showDeleteConfirm by remember { mutableStateOf<Playlist?>(null) }
 
     BackHandler(enabled = activeDetailPlaylist != null || showFavoriteDetail) {
         activeDetailPlaylist = null
@@ -158,7 +156,7 @@ fun PlaylistsScreen(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(NeonLime)
-                    .clickable { showCreateDialog = true }
+                    .bouncyClickable { showCreateDialog = true }
                     .padding(horizontal = 14.dp, vertical = 8.dp)
                     .testTag("new_playlist_button"),
                 contentAlignment = Alignment.Center
@@ -186,18 +184,18 @@ fun PlaylistsScreen(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Pinned "Disukai" Playlist (Permanent)
+            // Pinned "Disukai" Playlist
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(22.dp))
                         .background(
                             Brush.horizontalGradient(
                                 listOf(Color(0xFF4A1028), DarkSurfaceElevated)
                             )
                         )
-                        .clickable { showFavoriteDetail = true }
+                        .bouncyClickable(pressedScale = 0.97f) { showFavoriteDetail = true }
                         .padding(14.dp)
                         .testTag("liked_songs_playlist_item"),
                     verticalAlignment = Alignment.CenterVertically
@@ -205,7 +203,7 @@ fun PlaylistsScreen(
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(
                                 Brush.linearGradient(
                                     listOf(HeartRed, RadiantPink)
@@ -239,10 +237,10 @@ fun PlaylistsScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(Color.White.copy(alpha = 0.15f))
-                            .clickable { onPlayFavorites(false) },
+                            .bouncyClickable { onPlayFavorites(false) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -260,9 +258,9 @@ fun PlaylistsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(22.dp))
                         .background(DarkSurfaceElevated)
-                        .clickable { activeDetailPlaylist = playlist }
+                        .bouncyClickable(pressedScale = 0.97f) { activeDetailPlaylist = playlist }
                         .padding(14.dp)
                         .testTag("playlist_card_${playlist.id}"),
                     verticalAlignment = Alignment.CenterVertically
@@ -271,7 +269,7 @@ fun PlaylistsScreen(
                         coverUri = playlist.coverUri,
                         title = playlist.name,
                         size = 54.dp,
-                        shape = RoundedCornerShape(14.dp)
+                        shape = RoundedCornerShape(16.dp)
                     )
 
                     Spacer(modifier = Modifier.width(14.dp))
@@ -294,10 +292,10 @@ fun PlaylistsScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(Color.White.copy(alpha = 0.1f))
-                            .clickable {
+                            .bouncyClickable {
                                 if (playlist.songs.isNotEmpty()) {
                                     onPlayPlaylist(playlist, false)
                                 }
@@ -328,6 +326,7 @@ fun PlaylistsScreen(
                     onValueChange = { playlistNameInput = it },
                     placeholder = { Text("Contoh: Lagu Santai") },
                     singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().testTag("create_playlist_input")
                 )
             },
@@ -364,6 +363,7 @@ fun PlaylistsScreen(
                     value = renameInput,
                     onValueChange = { renameInput = it },
                     singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -420,11 +420,20 @@ private fun PlaylistDetailView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.testTag("playlist_detail_back")) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x22FFFFFF))
+                    .bouncyClickable { onBack() }
+                    .testTag("playlist_detail_back"),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Kembali",
-                    tint = TextPrimary
+                    tint = TextPrimary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -533,23 +542,26 @@ private fun PlaylistDetailView(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 items(songs) { song ->
                     val isPlaying = currentSong?.id == song.id
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { onSongSelected(song) }
-                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(if (isPlaying) Color(0x26D4FF28) else Color.Transparent)
+                            .bouncyClickable { onSongSelected(song) }
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         SongArtwork(
                             coverUri = song.customCoverUri,
                             title = song.title,
+                            artist = song.artist,
                             size = 46.dp,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(14.dp)
                         )
 
                         Spacer(modifier = Modifier.width(12.dp))
@@ -563,6 +575,7 @@ private fun PlaylistDetailView(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "${song.artist} • ${song.durationFormatted}",
                                 color = TextSecondary,
@@ -573,12 +586,18 @@ private fun PlaylistDetailView(
                         }
 
                         if (!isFavorites) {
-                            IconButton(onClick = { onRemoveSong(song.id) }) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .bouncyClickable { onRemoveSong(song.id) },
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Hapus dari Playlist",
                                     tint = TextSecondary.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }

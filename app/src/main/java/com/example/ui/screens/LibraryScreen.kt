@@ -28,6 +28,9 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -54,7 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Album
 import com.example.data.model.Song
+import com.example.data.model.SongSortOption
 import com.example.ui.components.SongArtwork
+import com.example.ui.components.bouncyClickable
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkSurfaceElevated
 import com.example.ui.theme.HeartRed
@@ -77,9 +82,12 @@ fun LibraryScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabTitles = listOf("Lagu", "Album", "Artis", "Disukai")
 
-    val filteredSongs = remember(songs, searchQuery, selectedTab) {
+    var sortOption by remember { mutableStateOf(SongSortOption.RECENTLY_ADDED) }
+    var showSortMenu by remember { mutableStateOf(false) }
+
+    val filteredSongs = remember(songs, searchQuery, selectedTab, sortOption) {
         val base = if (selectedTab == 3) songs.filter { it.isFavorite } else songs
-        if (searchQuery.isBlank()) base
+        val queried = if (searchQuery.isBlank()) base
         else {
             val q = searchQuery.trim().lowercase()
             base.filter {
@@ -87,6 +95,15 @@ fun LibraryScreen(
                 it.artist.lowercase().contains(q) ||
                 it.album.lowercase().contains(q)
             }
+        }
+
+        when (sortOption) {
+            SongSortOption.RECENTLY_ADDED -> queried.sortedByDescending { it.dateAdded }
+            SongSortOption.TITLE_ASC -> queried.sortedBy { it.title.lowercase() }
+            SongSortOption.TITLE_DESC -> queried.sortedByDescending { it.title.lowercase() }
+            SongSortOption.ARTIST -> queried.sortedBy { it.artist.lowercase() }
+            SongSortOption.DURATION_DESC -> queried.sortedByDescending { it.durationMs }
+            SongSortOption.DURATION_ASC -> queried.sortedBy { it.durationMs }
         }
     }
 
@@ -113,17 +130,75 @@ fun LibraryScreen(
             .background(DarkBackground)
     ) {
         // Title & Search
-        Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
-            Text(
-                text = "Pustaka Musik",
-                color = TextPrimary,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
+        Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Pustaka Musik",
+                    color = TextPrimary,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (selectedTab == 0 || selectedTab == 3) {
+                    Box {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0x22FFFFFF))
+                                .bouncyClickable { showSortMenu = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .testTag("library_sort_button"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Sort,
+                                    contentDescription = "Urutkan",
+                                    tint = NeonLime,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = sortOption.label,
+                                    color = TextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false },
+                            modifier = Modifier.background(DarkSurfaceElevated)
+                        ) {
+                            SongSortOption.values().forEach { option ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = option.label,
+                                            color = if (option == sortOption) NeonLime else TextPrimary,
+                                            fontWeight = if (option == sortOption) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    onClick = {
+                                        sortOption = option
+                                        showSortMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Search input field
+            // iOS-Style Search input field
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -143,12 +218,12 @@ fun LibraryScreen(
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(22.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = DarkSurfaceElevated,
                     unfocusedContainerColor = DarkSurfaceElevated,
                     focusedBorderColor = NeonLime,
-                    unfocusedBorderColor = Color(0x26FFFFFF),
+                    unfocusedBorderColor = Color(0x22FFFFFF),
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
                 ),
@@ -194,7 +269,7 @@ fun LibraryScreen(
             0, 3 -> { // Lagu or Disukai
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     if (filteredSongs.isEmpty()) {
                         item {
@@ -216,19 +291,22 @@ fun LibraryScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable { onSongSelected(song, filteredSongs) }
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(if (isPlaying) Color(0x26D4FF28) else Color.Transparent)
+                                    .bouncyClickable { onSongSelected(song, filteredSongs) }
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 SongArtwork(
                                     coverUri = song.customCoverUri,
                                     title = song.title,
-                                    size = 48.dp,
-                                    shape = RoundedCornerShape(12.dp)
+                                    artist = song.artist,
+                                    size = 50.dp,
+                                    shape = RoundedCornerShape(16.dp)
                                 )
 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(14.dp))
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -239,6 +317,7 @@ fun LibraryScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "${song.artist} • ${song.durationFormatted}",
                                         color = TextSecondary,
@@ -248,21 +327,27 @@ fun LibraryScreen(
                                     )
                                 }
 
-                                IconButton(
-                                    onClick = { onToggleFavorite(song) },
-                                    modifier = Modifier.size(36.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .bouncyClickable { onToggleFavorite(song) },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = if (song.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                         contentDescription = "Sukai",
                                         tint = if (song.isFavorite) HeartRed else TextSecondary.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
 
-                                IconButton(
-                                    onClick = { onSongOptionClick(song) },
-                                    modifier = Modifier.size(36.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .bouncyClickable { onSongOptionClick(song) },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.MoreVert,
@@ -287,15 +372,16 @@ fun LibraryScreen(
                     items(filteredAlbums) { album ->
                         Column(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { onAlbumSelected(album) }
+                                .clip(RoundedCornerShape(22.dp))
+                                .bouncyClickable { onAlbumSelected(album) }
                                 .padding(8.dp)
                         ) {
                             SongArtwork(
                                 coverUri = album.coverUri,
                                 title = album.name,
-                                size = 140.dp,
-                                shape = RoundedCornerShape(16.dp)
+                                artist = album.artist,
+                                size = 150.dp,
+                                shape = RoundedCornerShape(22.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -326,13 +412,13 @@ fun LibraryScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
+                                .clip(RoundedCornerShape(16.dp))
+                                .bouncyClickable {
                                     if (artistSongs.isNotEmpty()) {
                                         onSongSelected(artistSongs[0], artistSongs)
                                     }
                                 }
-                                .padding(vertical = 10.dp),
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(

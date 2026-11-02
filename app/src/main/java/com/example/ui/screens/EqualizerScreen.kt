@@ -241,7 +241,7 @@ fun EqualizerScreen(
                 .padding(horizontal = 20.dp)
                 .liquidGlass(
                     shape = RoundedCornerShape(28.dp),
-                    backgroundColor = Color(0xCC161226),
+                    backgroundColor = Color(0x18161226),
                     elevation = 8.dp,
                     isPowerSaver = isPowerSaver
                 )

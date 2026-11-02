@@ -70,7 +70,7 @@ fun FloatingBottomNavBar(
                 .height(64.dp)
                 .liquidGlass(
                     shape = RoundedCornerShape(32.dp),
-                    backgroundColor = Color(0xF0141122),
+                    backgroundColor = Color(0x18141126),
                     elevation = 12.dp,
                     isPowerSaver = isPowerSaver
                 )
@@ -98,10 +98,7 @@ fun FloatingBottomNavBar(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(pillBgColor)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onTabSelected(tab) }
+                        .bouncyClickable { onTabSelected(tab) }
                         .testTag(tab.testTag),
                     contentAlignment = Alignment.Center
                 ) {

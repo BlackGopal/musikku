@@ -261,7 +261,7 @@ fun SettingsScreen(
                 .fillMaxWidth()
                 .liquidGlass(
                     shape = RoundedCornerShape(20.dp),
-                    backgroundColor = Color(0x331E1838),
+                    backgroundColor = Color(0x181E1838),
                     elevation = 4.dp,
                     isPowerSaver = isPowerSaver
                 )

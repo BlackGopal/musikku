@@ -1,7 +1,6 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,26 +59,27 @@ fun MiniPlayer(
                 .widthIn(max = 520.dp)
                 .fillMaxWidth()
                 .liquidGlass(
-                    shape = RoundedCornerShape(20.dp),
-                    backgroundColor = Color(0xF218142A),
-                    elevation = 10.dp,
+                    shape = RoundedCornerShape(26.dp),
+                    backgroundColor = Color(0x1F18142E),
+                    elevation = 12.dp,
                     isPowerSaver = isPowerSaver
                 )
-                .clickable { onClick() }
+                .bouncyClickable(pressedScale = 0.97f) { onClick() }
                 .testTag("mini_player")
         ) {
             Column {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SongArtwork(
                         coverUri = currentSong.customCoverUri,
                         title = currentSong.title,
+                        artist = currentSong.artist,
                         size = 46.dp,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(14.dp)
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))
@@ -94,6 +93,7 @@ fun MiniPlayer(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = currentSong.artist,
                             color = TextSecondary,
@@ -103,13 +103,13 @@ fun MiniPlayer(
                         )
                     }
 
-                    // Play/Pause button
+                    // Bouncy Play/Pause button
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(NeonLime)
-                            .clickable { onPlayPause() }
+                            .bouncyClickable { onPlayPause() }
                             .testTag("mini_player_play_pause"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -117,17 +117,21 @@ fun MiniPlayer(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlaying) "Jeda" else "Putar",
                             tint = Color(0xFF0C1201),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
 
-                    IconButton(
-                        onClick = onNext,
+                    // Bouncy Next button
+                    Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .testTag("mini_player_next")
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x1AFFFFFF))
+                            .bouncyClickable { onNext() }
+                            .testTag("mini_player_next"),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.SkipNext,

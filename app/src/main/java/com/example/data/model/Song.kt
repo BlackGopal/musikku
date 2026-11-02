@@ -1,5 +1,14 @@
 package com.example.data.model
 
+enum class SongSortOption(val label: String) {
+    RECENTLY_ADDED("Baru Ditambah"),
+    TITLE_ASC("Nama (A-Z)"),
+    TITLE_DESC("Nama (Z-A)"),
+    ARTIST("Artis"),
+    DURATION_DESC("Durasi Terpanjang"),
+    DURATION_ASC("Durasi Terpendek")
+}
+
 data class Song(
     val id: Long,
     val title: String,
